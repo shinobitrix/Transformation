@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="10-Year Workout Tracker">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>10-Year Workout Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<style>
+:root{--bg:#0f172a;--text:#111827;--muted:#6b7280;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--line:#e5e7eb;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--text);padding-bottom:92px}
+header{position:sticky;top:0;z-index:10;background:#0f172a;color:white;text-align:center;padding:calc(14px + env(safe-area-inset-top)) 12px 12px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+header h1{margin:0;font-size:20px} header p{margin:5px 0 0;color:#cbd5e1;font-size:13px}
+main{max-width:860px;margin:0 auto;padding:12px}
+.card{background:white;border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+h2{font-size:19px;margin:0 0 10px} h3{font-size:16px;margin:14px 0 8px}
+.small{color:var(--muted);font-size:13px;line-height:1.35}
+label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px}
+input,select,textarea{width:100%;min-height:44px;border:1px solid #d1d5db;border-radius:12px;padding:11px;font-size:16px;background:white}
+textarea{min-height:90px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:800;margin-top:10px;color:white;background:var(--blue)}
+button.secondary{background:#374151} button.danger{background:var(--red)} button.good{background:var(--green)} .videoBtn{background:#111827!important;width:auto!important;padding:8px 10px!important;font-size:12px!important;margin:0!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(15,23,42,.98)}
+.tabbar button{margin:0;padding:10px 2px;border-radius:12px;font-size:11px;background:#1f2937}.tabbar button.active{background:var(--blue)}
+.screen{display:none}.screen.active{display:block}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800;margin-bottom:8px}
+.lift{background:#dbeafe;color:#1d4ed8}.cardio{background:#dcfce7;color:#166534}.rest{background:#fee2e2;color:#991b1b}.deload{background:#fef3c7;color:#92400e}.today{outline:3px solid var(--gold)}
+.calendarWrap{background:#111827;border-radius:16px;padding:8px;margin-top:8px;overflow:hidden}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;width:100%}
+.dow{text-align:center;color:#cbd5e1;font-size:10px;font-weight:900;padding:3px 0 5px;letter-spacing:.02em}
+.day{background:#fff;border:1px solid #e5e7eb;border-radius:9px;min-height:50px;padding:4px 2px;font-size:10px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;overflow:hidden}
+.day .num{font-weight:900;font-size:13px;line-height:1;color:#111827}
+.day .mini{font-size:9px;color:#4b5563;font-weight:900;line-height:1;max-width:100%;white-space:nowrap}
+.day .badge{margin:0;padding:2px 4px;font-size:8px;line-height:1;border-radius:999px;max-width:100%;white-space:nowrap}
+.saved{font-size:9px;color:var(--green);font-weight:900;line-height:1}.mutedDay{opacity:.18;background:#e5e7eb}
+.summary{white-space:pre-wrap;background:#f3f4f6;padding:12px;border-radius:12px;font-size:13px;max-height:420px;overflow:auto}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+.exercise{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.exerciseHeader{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.exerciseHeader button{width:auto;margin:0;padding:8px 10px;font-size:12px}
+.photoCard{border:1px solid var(--line);border-radius:14px;padding:10px;background:#f9fafb;margin-top:10px}.photoCard img{width:100%;border-radius:12px;margin-top:8px;max-height:260px;object-fit:cover}
+@media(max-width:430px){main{padding:10px}.grid{grid-template-columns:1fr}.day{min-height:72px;padding:5px}.sets{grid-template-columns:1fr 1fr}}
+
+/* iPhone compact calendar override */
+.calendarWrap{background:#111827;border-radius:16px;padding:8px;margin-top:8px;overflow:hidden!important}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;width:100%}
+.dow{text-align:center;color:#cbd5e1;font-size:10px;font-weight:900;padding:3px 0 5px;letter-spacing:.02em}
+.day{background:#fff;border:1px solid #e5e7eb;border-radius:9px;min-height:50px;padding:4px 2px;font-size:10px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;overflow:hidden}
+.day .num{font-weight:900;font-size:13px;line-height:1;color:#111827}
+.day .mini{font-size:9px;color:#4b5563;font-weight:900;line-height:1;max-width:100%;white-space:nowrap}
+.day .badge{margin:0;padding:2px 4px;font-size:8px;line-height:1;border-radius:999px;max-width:100%;white-space:nowrap}
+.row button.secondary{padding:10px 8px!important;font-size:14px!important;border-radius:12px!important}
+#monthLabel{font-size:18px!important}
+.card{padding:12px!important}
+@media(max-width:430px){
+  main{padding:8px!important}
+  .card{border-radius:16px!important}
+  .calendarWrap{padding:6px!important}
+  .calendar{gap:3px!important}
+  .day{min-height:46px!important;border-radius:8px!important;padding:3px 1px!important}
+  .day .num{font-size:12px!important}
+  .day .badge{font-size:7.5px!important;padding:2px 3px!important}
+  .day .mini{font-size:8px!important}
+  .dow{font-size:9px!important}
+  .tabbar{grid-template-columns:repeat(6,1fr)!important;gap:4px!important;padding-left:6px!important;padding-right:6px!important}
+  .tabbar button{font-size:10px!important;padding:9px 1px!important}
+}
+
+.nutritionDay{background:#fff7ed;border-color:#fed7aa}
+.mealBox{border:1px solid var(--line);border-radius:14px;background:#f9fafb;padding:10px;margin-top:10px}
+.checklist label{display:flex;gap:8px;align-items:center;color:#111827;font-size:14px;font-weight:600;margin:8px 0}
+.checklist input{width:auto;min-height:auto}
+.macroGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.macroGrid div{background:#f3f4f6;border-radius:12px;padding:8px;text-align:center}
+.macroGrid b{display:block;font-size:16px}
+@media(max-width:430px){.macroGrid{grid-template-columns:repeat(2,1fr)}}
+
+.foodTopNav{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.foodTopNav button{font-size:13px;padding:10px 4px;margin:0;background:#374151}
+.foodTopNav button.activeFood{background:#2563eb}
+.foodPanel{display:none}
+.foodPanel.activeFoodPanel{display:block}
+.simpleList label{display:flex;gap:9px;align-items:flex-start;color:#111827;font-size:14px;font-weight:600;margin:9px 0;line-height:1.25}
+.simpleList input{width:auto;min-height:auto;margin-top:2px}
+.mealCard{border:1px solid #e5e7eb;border-radius:14px;background:#f9fafb;padding:11px;margin-top:10px}
+.mealCard b{display:block;margin-bottom:4px}
+.shoppingHeader{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:10px;margin-bottom:10px}
+.weekBadge{display:inline-block;background:#111827;color:white;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;margin-bottom:6px}
+@media(max-width:430px){.foodTopNav{grid-template-columns:1fr 1fr 1fr}.foodTopNav button{font-size:12px}}
+
+.recipeCard{border:1px solid #e5e7eb;border-radius:16px;background:#fff;margin-top:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.recipeImg{width:100%;height:145px;object-fit:cover;display:block;background:#e5e7eb}
+.recipeBody{padding:12px}
+.recipeBody h3{margin:0 0 6px}
+.recipeMeta{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.recipeMeta div{background:#f3f4f6;border-radius:10px;padding:7px;text-align:center;font-size:12px}
+.recipeMeta b{display:block;font-size:13px}
+.recipeBody details{margin-top:8px}
+.recipeBody summary{font-weight:800;color:#2563eb}
+.recipeTags span{display:inline-block;background:#dcfce7;color:#166534;border-radius:999px;padding:3px 7px;font-size:11px;font-weight:800;margin:3px 3px 0 0}
+@media(max-width:430px){.recipeImg{height:130px}.recipeMeta{grid-template-columns:repeat(2,1fr)}}
+
+.physiqueStats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.physiqueStats div{background:#f3f4f6;border-radius:12px;padding:9px;text-align:center}
+.physiqueStats b{display:block;font-size:16px;color:#111827}
+.measureGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.photoTriple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.photoTriple img{width:100%;border-radius:10px;max-height:160px;object-fit:cover;background:#e5e7eb}
+.checkinCard{border:1px solid #e5e7eb;border-radius:16px;background:#f9fafb;padding:12px;margin-top:12px}
+.prGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:430px){.physiqueStats,.measureGrid,.prGrid{grid-template-columns:1fr 1fr}.photoTriple{grid-template-columns:1fr}.photoTriple img{max-height:260px}}
+
+/* Food tab only upgrade */
+.foodNav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.foodNav button{font-size:11px;padding:10px 2px;margin:0;background:#374151}.foodNav button.on{background:#2563eb}
+.foodPane{display:none}.foodPane.on{display:block}.foodHero{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:11px;margin:10px 0;line-height:1.35}
+.foodGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cookCard{border:1px solid #e5e7eb;border-radius:15px;margin:12px 0;overflow:hidden;background:white}.cookCard h3{margin:0;background:#f8fafc;padding:12px}.cookBody{padding:12px}
+.cookMeta{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.cookMeta div,.shopGroup{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin:8px 0}
+.checkList label{display:flex;gap:8px;color:#111827;font-size:14px;line-height:1.25;font-weight:600;margin:8px 0}.checkList input{width:auto;min-height:auto}details{border-top:1px solid #e5e7eb;margin-top:9px;padding-top:9px}summary{font-weight:900;color:#2563eb}.stepList li{margin-bottom:8px;line-height:1.35}
+@media(max-width:430px){.foodGrid{grid-template-columns:1fr}.foodNav button{font-size:10px}.cookMeta{grid-template-columns:1fr}}
+
+
+.videoLink{display:inline-block;background:#111827;color:white!important;text-decoration:none;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;margin:0;text-align:center}
+.videoLink:visited{color:white!important}
+
+.photoBackupBtn{background:#16a34a!important}
+.photoHelp{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:10px;margin:10px 0;color:#111827}
+</style>
+</head>
+<body>
+<header><h1>10-Year Workout Tracker</h1><p>Start: May 18, 2026 • Auto-progressing workouts • Editable weights</p></header>
+
+<main>
+<section id="screen-calendar" class="screen active">
+<div class="card">
+<h2>Calendar</h2>
+<div class="row"><button class="secondary" onclick="changeMonth(-1)">‹ Prev</button><div id="monthLabel" style="text-align:center;font-weight:900"></div><button class="secondary" onclick="changeMonth(1)">Next ›</button></div>
+<div class="calendarWrap">
+<div class="calendar"><div class="dow">SUN</div><div class="dow">MON</div><div class="dow">TUE</div><div class="dow">WED</div><div class="dow">THU</div><div class="dow">FRI</div><div class="dow">SAT</div></div>
+<div id="calendarGrid" class="calendar"></div>
+</div>
+<p class="small"><b>Legend:</b> Blue = Lift • Green = Cardio • Red = Rest • Yellow = Deload. Tap any day to log it.</p>
+</div>
+</section>
+
+<section id="screen-log" class="screen">
+<div class="card">
+<span class="badge lift" id="selectedTypeBadge">Selected</span>
+<h2 id="selectedDateTitle">Log Workout</h2>
+<p class="small" id="scheduledText"></p>
+<div class="grid">
+<div><label>Date</label><input id="logDate" type="date" onchange="dateChanged()"></div>
+<div><label>Training Year</label><input id="trainingYear" readonly></div>
+<div><label>Program Week</label><input id="weekNum" readonly></div>
+<div><label>Workout</label><select id="workoutType" onchange="renderExercises()"></select></div>
+<div><label>Body Weight</label><input id="bodyweight" type="number" step="0.1"></div>
+<div><label>Waist</label><input id="waist" type="number" step="0.1"></div>
+<div><label>Energy 1-10</label><input id="energy" type="number"></div>
+<div><label>Soreness 1-10</label><input id="soreness" type="number"></div>
+<div><label>Cardio Minutes</label><input id="cardio" type="number"></div>
+<div><label>Steps</label><input id="steps" type="number"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Predicted Workout</h2>
+<p class="small">Weights, sets, and reps are predicted from your starting numbers and progression phase. Change anything you need before saving.</p>
+<div id="exerciseList"></div>
+<button class="good" onclick="addCustomExercise()">+ Add Exercise</button>
+</div>
+
+<div class="card">
+<h2>Notes</h2>
+<textarea id="notes" placeholder="Sleep, travel, meals, soreness, form notes..."></textarea>
+<button onclick="saveLog()">Save This Date</button>
+</div>
+</section>
+
+<section id="screen-plan" class="screen">
+<div class="card">
+<h2>10-Year Progression Roadmap</h2>
+<p><b>Years 1–2:</b> Foundation. Full-body strength, form, fat loss, steady progression.</p>
+<p><b>Years 3–4:</b> Intermediate muscle-building. More dumbbell/barbell variations and volume.</p>
+<p><b>Years 5–6:</b> Strength + hypertrophy blend. Heavier top sets and accessory work.</p>
+<p><b>Years 7–8:</b> Advanced variety. More unilateral, tempo, and specialization blocks.</p>
+<p><b>Years 9–10:</b> Longevity performance. Joint-friendly strength, conditioning, and muscle maintenance.</p>
+<p class="small">The app automatically rotates exercises by 8-week blocks and deloads every 4th week. You can still edit any exercise, sets, reps, or weight.</p>
+</div>
+
+<div class="card">
+<h2>Notifications & Demo Videos</h2>
+<p class="small"><b>iPhone note:</b> For reliable reminders, use the Apple Calendar reminder download. In-app notifications work while the app is open.</p>
+<div class="grid">
+<div><label>Reminder Time</label><input id="reminderTime" type="time" value="07:00"></div>
+<div><label>Reminder Days Ahead</label><select id="reminderDays"><option value="0">Same day</option><option value="1">Day before</option></select></div>
+</div>
+<button onclick="enableNotifications()">Enable In-App Notifications</button>
+<button class="secondary" onclick="downloadCalendarReminders()">Download 12-Week Calendar Reminders</button>
+</div>
+
+
+<div class="card">
+<h2>Workout Video Library</h2>
+<p class="small">Direct YouTube demo searches.</p>
+<div class="grid">
+<a class="videoLink" href="https://www.youtube.com/results?search_query=squat+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Squat</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=bench+press+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Bench Press</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=deadlift+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Deadlift</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=bent+over+row+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Rows</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=lat+pulldown+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Lat Pulldown</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=dumbbell+shoulder+press+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Shoulder Press</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=walking+lunges+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Lunges</a>
+<a class="videoLink" href="https://www.youtube.com/results?search_query=hanging+leg+raises+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Leg Raises</a>
+</div>
+</div>
+
+<div class="card">
+<h2>Weekly Pattern</h2>
+<p><b>Day 1:</b> Lift A</p><p><b>Day 2:</b> Cardio 20–35 min</p><p><b>Day 3:</b> Lift B</p><p><b>Day 4:</b> Rest</p><p><b>Day 5:</b> Lift C</p><p><b>Day 6:</b> Optional cardio / mobility</p><p><b>Day 7:</b> Rest</p>
+</div>
+</section>
+
+
+<section id="screen-photos" class="screen">
+  <div class="card">
+    <h2>Physique Dashboard</h2>
+    <p class="small">Track the measurements people usually follow when building muscle and getting lean. Use the same tape position and lighting every time.</p>
+    <div id="physiqueSummary" class="physiqueStats">
+      <div><b id="sumWeight">—</b>Weight</div>
+      <div><b id="sumWaist">—</b>Waist</div>
+      <div><b id="sumBodyFat">—</b>Est. Body Fat</div>
+      <div><b id="sumLeanMass">—</b>Lean Mass</div>
+      <div><b id="sumShoulderWaist">—</b>Shoulder/Waist</div>
+      <div><b id="sumChestWaist">—</b>Chest/Waist</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>New Physique Check-in</h2>
+    <div class="grid">
+      <div><label>Milestone</label><input id="photoMilestone" placeholder="Week 4 / Month 3 / Custom"></div>
+      <div><label>Date</label><input id="photoDate" type="date"></div>
+      <div><label>Height (feet)</label><input id="physHeightFeet" type="number" value="5"></div><div><label>Height (inches)</label><input id="physHeightInches" type="number" value="8"></div>
+      <div><label>Body Weight</label><input id="photoWeight" type="number" step="0.1"></div>
+    </div>
+
+    <h3>Measurements</h3>
+    <div class="measureGrid">
+      <div><label>Waist at navel</label><input id="photoWaist" type="number" step="0.1"></div>
+      <div><label>Neck</label><input id="physNeck" type="number" step="0.1"></div>
+      <div><label>Chest</label><input id="physChest" type="number" step="0.1"></div>
+      <div><label>Shoulders</label><input id="physShoulders" type="number" step="0.1"></div>
+      <div><label>Left Arm</label><input id="physLeftArm" type="number" step="0.1"></div>
+      <div><label>Right Arm</label><input id="physRightArm" type="number" step="0.1"></div>
+      <div><label>Forearm</label><input id="physForearm" type="number" step="0.1"></div>
+      <div><label>Hips / Glutes</label><input id="physHips" type="number" step="0.1"></div>
+      <div><label>Left Thigh</label><input id="physLeftThigh" type="number" step="0.1"></div>
+      <div><label>Right Thigh</label><input id="physRightThigh" type="number" step="0.1"></div>
+      <div><label>Left Calf</label><input id="physLeftCalf" type="number" step="0.1"></div>
+      <div><label>Right Calf</label><input id="physRightCalf" type="number" step="0.1"></div>
+    </div>
+
+    <h3>Strength PR Tracker</h3>
+    <div class="prGrid">
+      <div><label>Squat PR</label><input id="prSquat" type="number"></div>
+      <div><label>Bench PR</label><input id="prBench" type="number"></div>
+      <div><label>Deadlift PR</label><input id="prDeadlift" type="number"></div>
+      <div><label>Overhead Press PR</label><input id="prOHP" type="number"></div>
+      <div><label>Row PR</label><input id="prRow" type="number"></div>
+      <div><label>Pull-ups Max</label><input id="prPullups" type="number"></div>
+    </div>
+
+    <h3>Recovery Markers</h3>
+    <div class="grid">
+      <div><label>Sleep Hours</label><input id="physSleep" type="number" step="0.1"></div>
+      <div><label>Stress 1-10</label><input id="physStress" type="number"></div>
+      <div><label>Energy 1-10</label><input id="physEnergy" type="number"></div>
+      <div><label>Water Intake</label><input id="physWater" placeholder="ex: 3 liters"></div>
+    </div>
+
+    <h3>Progress Photos</h3>
+    <p class="small">Take front, side, and back photos in the same lighting. These save locally in the app after compression.</p>
+<div class="photoHelp"><b>Photo backup:</b> The app compresses photos before saving. Your original camera photos should also stay in your iPhone Photos app. Use the green backup button to download app copies to your phone/files.</div>
+
+    <div class="grid">
+      <div><label>Front Photo</label><input id="frontPhotoInput" type="file" accept="image/*"></div>
+      <div><label>Side Photo</label><input id="sidePhotoInput" type="file" accept="image/*"></div>
+      <div><label>Back Photo</label><input id="backPhotoInput" type="file" accept="image/*"></div>
+    </div>
+
+    <label style="margin-top:10px">Notes</label>
+    <textarea id="photoNotes" placeholder="How clothes fit, pump, lighting, travel fatigue, diet notes..."></textarea>
+    <button onclick="savePhotoMilestone()">Save Physique Check-in</button>
+<button type="button" class="photoBackupBtn" onclick="downloadCurrentCheckinPhotos()">Save This Check-In Photos to Phone</button>
+<button type="button" class="secondary" onclick="downloadAllPhysiquePhotos()">Backup All Saved Physique Photos</button>
+
+  </div>
+
+  <div class="card">
+    <h2>Saved Physique Check-ins</h2>
+    <div id="photoList"></div>
+  </div>
+</section>
+
+
+<section id="screen-summary" class="screen">
+<div class="card">
+<h2>Saved Logs</h2>
+<button onclick="showSummary()">Refresh</button>
+<button class="secondary" onclick="exportData()">Export Workout Backup</button>
+<button class="secondary" onclick="exportPhotoData()">Export Photo Backup</button>
+<button class="danger" onclick="clearAll()">Clear Workouts</button>
+<button class="danger" onclick="clearPhotos()">Clear Photos</button>
+<div id="summary" class="summary">No saved logs yet.</div>
+</div>
+</section>
+
+
+
+<section id="screen-nutrition" class="screen">
+ <div class="card"><h2>Food Tab</h2><div class="foodNav">
+  <button id="fbtnCal" class="on" onclick="foodTab('cal')">Calendar</button><button id="fbtnWeek" onclick="foodTab('week')">Week</button><button id="fbtnShop" onclick="foodTab('shop')">Shopping</button><button id="fbtnGuide" onclick="foodTab('guide')">Guide</button>
+ </div><p class="small">Select a shopping date. The grocery list starts on that date and covers the next 7 days.</p></div>
+ <div id="foodCal" class="foodPane on"><div class="card"><h2>Food Calendar</h2><div class="foodGrid"><div><label>Shopping Date / Cycle Start</label><input id="foodCycleDate" type="date" onchange="selectFoodDate(this.value)"></div><div><label>Goal</label><select id="foodGoal"><option value="cut">Cut / Get Lean</option><option value="recomp" selected>Recomp</option><option value="leanbulk">Lean Bulk</option></select></div></div><button onclick="selectFoodDate(foodCycleDate.value)">Build This Week</button><div class="foodHero" id="foodExplain"></div><div class="row"><button class="secondary" onclick="foodMonth(-1)">‹ Prev</button><div id="nutritionMonthLabel" style="text-align:center;font-weight:900"></div><button class="secondary" onclick="foodMonth(1)">Next ›</button></div><div class="calendarWrap"><div class="calendar"><div class="dow">SUN</div><div class="dow">MON</div><div class="dow">TUE</div><div class="dow">WED</div><div class="dow">THU</div><div class="dow">FRI</div><div class="dow">SAT</div></div><div id="nutritionCalendarGrid" class="calendar"></div></div></div></div>
+ <div id="foodWeek" class="foodPane"><div class="card"><h2 id="foodWeekTitle">Weekly Meal Prep</h2><div class="foodHero" id="foodWeekHero"></div><div id="foodRecipes"></div></div></div>
+ <div id="foodShop" class="foodPane"><div class="card"><h2>Shopping List</h2><div class="foodHero" id="shoppingWeekHeader"></div><div id="shoppingListOutput"></div></div></div>
+ <div id="foodGuide" class="foodPane"><div class="card"><h2>Timing Guide</h2><p><b>Lift days:</b> pre-workout + 5g creatine 45 min before training. Protein shake within 30 min after.</p><p><b>Trip days:</b> eat every 3–4 hours. Pack meals, shake, jerky/protein backup, and electrolytes.</p><p><b>Rest days:</b> creatine with any meal. Protein shake only if needed.</p></div></div>
+</section>
+</main>
+
+<nav class="tabbar">
+<button class="active" onclick="switchScreen('calendar',this)">Calendar</button>
+<button onclick="switchScreen('log',this)">Log</button>
+<button onclick="switchScreen('plan',this)">Plan</button>
+<button onclick="switchScreen('photos',this)">Physique</button>
+<button onclick="switchScreen('summary',this)">Summary</button><button onclick="switchScreen('nutrition',this)">Food</button>
+</nav>
+
+<script>
+const planStart="2026-05-18";
+let viewDate=new Date(2026,4,18);
+const baseWeights={Squat:135,Bench:115,Deadlift:155,Row:95,ShoulderPress:30,LatPulldown:120,InclineDBPress:35,Lunge:25,KBSwing:35,GobletSquat:40,DBRow:40};
+
+const blocks=[
+ {name:"Foundation",A:[["Squat","Squat",4,"6-10"],["Bench Press","Bench",4,"6-10"],["Bent-over Row","Row",3,"8-12"],["DB Shoulder Press","ShoulderPress",3,"8-12"],["Plank","Body",3,"30-60 sec"]],
+ B:[["Deadlift","Deadlift",4,"5-8"],["Lat Pulldown","LatPulldown",3,"8-12"],["Incline DB Press","InclineDBPress",3,"8-12"],["Walking Lunges","Lunge",3,"10-15/leg"],["Hanging Leg Raises","Body",3,"8-12"]],
+ C:[["Kettlebell Swings","KBSwing",3,"15"],["Push-ups","Body",3,"AMRAP"],["Goblet Squats","GobletSquat",3,"12"],["DB Rows","DBRow",3,"10"],["HIIT Cardio","Cardio",1,"10-15 min"]]},
+ {name:"Variation 1",A:[["Front Squat","Squat",4,"6-10"],["DB Bench Press","Bench",4,"8-12"],["Seated Cable Row","Row",3,"8-12"],["Arnold Press","ShoulderPress",3,"8-12"],["Side Plank","Body",3,"30-45 sec"]],
+ B:[["Romanian Deadlift","Deadlift",4,"6-10"],["Assisted Pull-up / Pulldown","LatPulldown",3,"8-12"],["Incline Barbell Press","InclineDBPress",3,"6-10"],["Reverse Lunges","Lunge",3,"10-12/leg"],["Cable Crunch","Body",3,"10-15"]],
+ C:[["Trap Bar Deadlift Light","Deadlift",3,"8"],["Dips / Assisted Dips","Body",3,"8-12"],["Leg Press","Squat",3,"10-15"],["Chest-supported Row","DBRow",3,"8-12"],["Intervals","Cardio",1,"12-18 min"]]},
+ {name:"Variation 2",A:[["Leg Press","Squat",4,"10-15"],["Incline Bench Press","Bench",4,"6-10"],["One-arm DB Row","DBRow",3,"10-12"],["Machine Shoulder Press","ShoulderPress",3,"8-12"],["Ab Wheel / Plank","Body",3,"8-12"]],
+ B:[["Sumo Deadlift","Deadlift",4,"5-8"],["Pull-ups / Pulldown","LatPulldown",3,"6-10"],["Flat DB Press","Bench",3,"8-12"],["Bulgarian Split Squat","Lunge",3,"8-10/leg"],["Hanging Knee Raise","Body",3,"10-15"]],
+ C:[["Goblet Squat Tempo","GobletSquat",3,"10-12"],["Push-ups Slow Tempo","Body",3,"AMRAP"],["Hip Thrust","Deadlift",3,"8-12"],["Cable Row","Row",3,"10-12"],["Zone 2 Cardio","Cardio",1,"20-35 min"]]},
+ {name:"Longevity Strength",A:[["Box Squat","Squat",3,"5-8"],["Paused Bench Press","Bench",3,"5-8"],["Chest-supported Row","Row",3,"8-10"],["Landmine Press","ShoulderPress",3,"8-10"],["Farmer Carry","Body",3,"30-60 sec"]],
+ B:[["Trap Bar Deadlift","Deadlift",3,"4-6"],["Neutral Grip Pulldown","LatPulldown",3,"8-10"],["Incline DB Press","InclineDBPress",3,"8-10"],["Step-ups","Lunge",3,"8-10/leg"],["Pallof Press","Body",3,"10-12/side"]],
+ C:[["Kettlebell Swings","KBSwing",3,"12-15"],["Push-ups","Body",3,"AMRAP"],["Goblet Squat","GobletSquat",3,"10-12"],["DB Rows","DBRow",3,"10"],["Easy Conditioning","Cardio",1,"20-30 min"]]}
+];
+
+function ymd(d){return d.toISOString().slice(0,10)}
+function parseLocal(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function daysBetween(a,b){return Math.floor((parseLocal(b)-parseLocal(a))/86400000)}
+function programInfo(ds){let diff=daysBetween(planStart,ds);return {days:diff,week:diff>=0?Math.floor(diff/7)+1:0,year:diff>=0?Math.floor(diff/365)+1:0,dayIndex:((diff%7)+7)%7}}
+function weekType(week){return week>0 && week%4===0?"Deload":"Normal"}
+function workoutForDate(ds){let info=programInfo(ds);let pattern=[["Lift","A"],["Cardio","Cardio"],["Lift","B"],["Rest","Rest"],["Lift","C"],["Cardio","Cardio"],["Rest","Rest"]][info.dayIndex];return {type:pattern[0],code:pattern[1],...info,deload:weekType(info.week)==="Deload"}}
+function currentBlock(week,year){let byYear= year<=2?0:year<=4?1:year<=8?2:3;let rotate=Math.floor(((week-1)%24)/8);return blocks[(byYear+rotate)%blocks.length]}
+function predictedWeight(key,week,deload){if(key==="Body"||key==="Cardio")return "";let base=baseWeights[key]||50;let cycles=Math.max(0,week-1);let inc = key.includes("DB")||key==="ShoulderPress"||key==="Lunge"||key==="KBSwing"||key==="GobletSquat" ? 2.5 : 5;let w=base + Math.floor(cycles/2)*inc;if(deload)w=Math.round(w*.75);return Math.round(w/5)*5}
+function logs(){return JSON.parse(localStorage.getItem("tenYearLogs")||"{}")}
+function photos(){return JSON.parse(localStorage.getItem("tenYearPhotos")||"[]")}
+
+function renderCalendar(){monthLabel.textContent=viewDate.toLocaleDateString(undefined,{month:"long",year:"numeric"});calendarGrid.innerHTML="";let y=viewDate.getFullYear(),m=viewDate.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0),saved=logs();for(let i=0;i<first.getDay();i++){let b=document.createElement("div");b.className="day mutedDay";calendarGrid.appendChild(b)}let today=ymd(new Date());for(let d=1;d<=last.getDate();d++){let ds=ymd(new Date(y,m,d)),p=workoutForDate(ds),el=document.createElement("div");el.className="day";if(ds===today)el.classList.add("today");let cls=p.deload?"deload":p.type==="Lift"?"lift":p.type==="Cardio"?"cardio":"rest";let label=p.deload&&p.type==="Lift"?"DL":(p.type==="Cardio"?"Crd":(p.type==="Rest"?"Rst":"Lift"));el.innerHTML=`<div class="num">${d}</div><div class="badge ${cls}">${label}</div><div class="mini">${p.code}</div>${saved[ds]?'<div class="saved">✓</div>':''}`;el.onclick=()=>selectDate(ds);calendarGrid.appendChild(el)}}
+function changeMonth(n){viewDate.setMonth(viewDate.getMonth()+n);renderCalendar()}
+function switchScreen(n,btn){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-"+n).classList.add("active");document.querySelectorAll(".tabbar button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");if(n==="calendar")renderCalendar();if(n==="photos")renderPhotos();
+try{renderNutritionCalendar();renderFoodWeek(selectedFoodDate||ymd(new Date()));}catch(e){}if(n==="summary")showSummary();if(n==="nutrition"){renderNutritionCalendar();renderFoodWeek(selectedFoodDate||ymd(new Date()))}}
+function selectDate(ds){logDate.value=ds;loadDate(ds);switchToLog()}
+function switchToLog(){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-log").classList.add("active");document.querySelectorAll(".tabbar button").forEach(b=>b.classList.remove("active"));document.querySelectorAll(".tabbar button")[1].classList.add("active")}
+function dateChanged(){loadDate(logDate.value)}
+function loadDate(ds){let p=workoutForDate(ds);selectedDateTitle.textContent="Log "+parseLocal(ds).toLocaleDateString();trainingYear.value=p.year>0?"Year "+p.year:"Before start";weekNum.value=p.week>0?"Week "+p.week+(p.deload?" Deload":""):"Before start";workoutType.innerHTML="";let options=p.type==="Lift"?["Lift "+p.code,"Cardio / Recovery","Rest"]:p.type==="Cardio"?["Cardio / Recovery","Rest","Lift A","Lift B","Lift C"]:["Rest","Cardio / Recovery","Lift A","Lift B","Lift C"];options.forEach(o=>{let opt=document.createElement("option");opt.value=o;opt.textContent=o;workoutType.appendChild(opt)});scheduledText.textContent=describeDay(ds);let badge=selectedTypeBadge;badge.textContent=p.deload&&p.type==="Lift"?"Deload":p.type;badge.className="badge "+(p.deload?"deload":p.type==="Lift"?"lift":p.type==="Cardio"?"cardio":"rest");let saved=logs()[ds];["bodyweight","waist","energy","soreness","cardio","steps","notes"].forEach(id=>document.getElementById(id).value=saved?.[id]||"");renderExercises(saved?.exercises)}
+function describeDay(ds){let p=workoutForDate(ds);if(p.type==="Rest")return "Rest day. Optional easy walk, mobility, hydration, and sleep.";if(p.type==="Cardio")return "Cardio day: 20–35 minutes easy walking, incline treadmill, bike, or zone 2.";let block=currentBlock(p.week,p.year);return `${p.deload?"Deload ":""}${p.code} — ${block.name} block. Predicted sets/reps/weights are editable.`}
+function renderExercises(savedExercises){exerciseList.innerHTML="";let ds=logDate.value,p=workoutForDate(ds),value=workoutType.value;if(value==="Rest"){exerciseList.innerHTML='<p class="small">Rest day. No lifting required.</p>';return}if(value==="Cardio / Recovery"){exerciseList.innerHTML='<div class="exercise"><h3>Cardio / Recovery</h3><div class="grid"><div><label>Sets</label><input value="1"></div><div><label>Reps / Time</label><input value="20-35 min"></div><div><label>Weight</label><input value=""></div><div><label>Actual</label><input placeholder="minutes / notes"></div></div></div>';return}let code=value.replace("Lift ","");let block=currentBlock(p.week,p.year);let list=block[code]||[];if(savedExercises)list=savedExercises.map(e=>[e.name,e.key||"Custom",e.sets,e.reps,e.predicted]);list.forEach((ex,i)=>addExerciseRow(ex[0],ex[1],ex[2],ex[3],savedExercises?ex[4]:predictedWeight(ex[1],p.week,p.deload),i))}
+function addExerciseRow(name,key,sets,reps,weight,i){let div=document.createElement("div");div.className="exercise";div.dataset.key=key;div.innerHTML=`<div class="exerciseHeader"><h3>${name}</h3><div><a class="videoLink" href="https://www.youtube.com/results?search_query=exercise+proper+form+exercise+demo" target="_blank" rel="noopener noreferrer">Video</a> <button class="danger" onclick="this.closest('.exercise').remove()">Remove</button></div></div><div class="grid"><div><label>Exercise</label><input class="exName" value="${name}"></div><div><label>Predicted Weight</label><input class="exWeight" value="${weight}"></div><div><label>Sets</label><input class="exSets" value="${sets}"></div><div><label>Reps</label><input class="exReps" value="${reps}"></div></div><div class="sets"><div><label>Set 1 actual</label><input class="actual" placeholder="wt x reps"></div><div><label>Set 2 actual</label><input class="actual" placeholder="wt x reps"></div><div><label>Set 3 actual</label><input class="actual" placeholder="wt x reps"></div><div><label>Set 4 actual</label><input class="actual" placeholder="wt x reps"></div></div>`;exerciseList.appendChild(div); if(typeof refreshVideoLinks==='function') refreshVideoLinks()}
+function addCustomExercise(){addExerciseRow("Custom Exercise","Custom",3,"8-12","",999)}
+function collectExercises(){return Array.from(document.querySelectorAll("#exerciseList .exercise")).map(div=>({name:div.querySelector(".exName")?.value||"",key:div.dataset.key,sets:div.querySelector(".exSets")?.value||"",reps:div.querySelector(".exReps")?.value||"",predicted:div.querySelector(".exWeight")?.value||"",actual:Array.from(div.querySelectorAll(".actual")).map(a=>a.value).filter(Boolean)}))}
+function saveLog(){let ds=logDate.value,saved=logs();saved[ds]={date:ds,trainingYear:trainingYear.value,weekNum:weekNum.value,workoutType:workoutType.value,bodyweight:bodyweight.value,waist:waist.value,energy:energy.value,soreness:soreness.value,cardio:cardio.value,steps:steps.value,notes:notes.value,exercises:collectExercises(),savedAt:new Date().toISOString()};localStorage.setItem("tenYearLogs",JSON.stringify(saved));alert("Saved for "+ds);renderCalendar()}
+function showSummary(){let saved=logs(),dates=Object.keys(saved).sort();if(!dates.length){summary.textContent="No saved logs yet.";return}let out=`Saved logs: ${dates.length}\n\n`;dates.forEach(d=>{let l=saved[d];out+=`${d} | ${l.workoutType||"-"} | ${l.weekNum||""}\nWeight: ${l.bodyweight||"-"} | Waist: ${l.waist||"-"} | Energy: ${l.energy||"-"} | Soreness: ${l.soreness||"-"} | Cardio: ${l.cardio||"-"}\n`;if(l.exercises)l.exercises.forEach(e=>out+=`- ${e.name}: ${e.sets}x${e.reps} @ ${e.predicted} | Actual: ${(e.actual||[]).join(", ")}\n`);out+=`Notes: ${l.notes||"-"}\n\n`});summary.textContent=out}
+function exportData(){let blob=new Blob([localStorage.getItem("tenYearLogs")||"{}"],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="10-year-workout-backup.json";a.click()}
+function clearAll(){if(confirm("Clear workout logs?")){localStorage.removeItem("tenYearLogs");renderCalendar();showSummary()}}
+
+function navyBodyFatMale(height, neck, waist){
+  height=parseFloat(height); neck=parseFloat(neck); waist=parseFloat(waist);
+  if(!height || !neck || !waist || waist <= neck) return null;
+  return 86.010 * Math.log10(waist - neck) - 70.041 * Math.log10(height) + 36.76;
+}
+function latestPhysique(){
+  const arr=photos().sort((a,b)=>a.date.localeCompare(b.date));
+  return arr.length ? arr[arr.length-1] : null;
+}
+function updatePhysiqueSummary(){
+  const p=latestPhysique();
+  if(!document.getElementById("sumWeight")) return;
+  if(!p){
+    ["sumWeight","sumWaist","sumBodyFat","sumLeanMass","sumShoulderWaist","sumChestWaist"].forEach(id=>document.getElementById(id).textContent="—");
+    return;
+  }
+  const bf = navyBodyFatMale(p.height, p.neck, p.waist);
+  const weight=parseFloat(p.weight||0);
+  const lean = bf && weight ? weight*(1-bf/100) : null;
+  const shoulderWaist = p.shoulders && p.waist ? (parseFloat(p.shoulders)/parseFloat(p.waist)).toFixed(2) : "—";
+  const chestWaist = p.chest && p.waist ? (parseFloat(p.chest)/parseFloat(p.waist)).toFixed(2) : "—";
+  document.getElementById("sumWeight").textContent=p.weight?`${p.weight} lb`:"—";
+  document.getElementById("sumWaist").textContent=p.waist?`${p.waist} in`:"—";
+  document.getElementById("sumBodyFat").textContent=bf?`${bf.toFixed(1)}%`:"—";
+  document.getElementById("sumLeanMass").textContent=lean?`${lean.toFixed(1)} lb`:"—";
+  document.getElementById("sumShoulderWaist").textContent=shoulderWaist;
+  document.getElementById("sumChestWaist").textContent=chestWaist;
+}
+
+
+function compressImageFile(file, maxDim=1200, quality=0.78){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width, h=img.height;
+        const scale=Math.min(1, maxDim/Math.max(w,h));
+        w=Math.round(w*scale); h=Math.round(h*scale);
+        const canvas=document.createElement("canvas");
+        canvas.width=w; canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror=reject;
+      img.src=e.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function readFileAsDataURL(inputId){
+  const input=document.getElementById(inputId);
+  if(!input || !input.files || !input.files[0]) return "";
+  return await compressImageFile(input.files[0],1200,0.78);
+}
+function downloadDataUrl(dataUrl, filename){
+  if(!dataUrl) return;
+  const a=document.createElement("a");
+  a.href=dataUrl;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>document.body.removeChild(a),100);
+}
+function downloadCurrentCheckinPhotos(){
+  const ds=(document.getElementById("photoDate")?.value)||ymd(new Date());
+  const arr=(typeof photos==="function"?photos():JSON.parse(localStorage.getItem("photoMilestones")||"[]"));
+  const p=arr.find(x=>x.date===ds) || arr[arr.length-1];
+  if(!p || !p.photos){ alert("Save the physique check-in first, then tap this backup button."); return; }
+  if(p.photos.front) downloadDataUrl(p.photos.front,`physique-${ds}-front.jpg`);
+  setTimeout(()=>{ if(p.photos.side) downloadDataUrl(p.photos.side,`physique-${ds}-side.jpg`); },250);
+  setTimeout(()=>{ if(p.photos.back) downloadDataUrl(p.photos.back,`physique-${ds}-back.jpg`); },500);
+}
+function downloadAllPhysiquePhotos(){
+  const arr=(typeof photos==="function"?photos():JSON.parse(localStorage.getItem("photoMilestones")||"[]"));
+  let delay=0, count=0;
+  arr.forEach(p=>{
+    const ds=p.date||p.id||"checkin";
+    ["front","side","back"].forEach(view=>{
+      if(p.photos && p.photos[view]){
+        setTimeout(()=>downloadDataUrl(p.photos[view],`physique-${ds}-${view}.jpg`),delay);
+        delay+=300; count++;
+      }
+    });
+  });
+  if(!count) alert("No saved physique photos found.");
+}
+
+async function savePhotoMilestone(){
+  const front = await readFileAsDataURL("frontPhotoInput");
+  const side = await readFileAsDataURL("sidePhotoInput");
+  const back = await readFileAsDataURL("backPhotoInput");
+  const totalHeight = (parseFloat(physHeightFeet.value||0)*12) + parseFloat(physHeightInches.value||0);
+  const bf = navyBodyFatMale(totalHeight, physNeck.value, photoWaist.value);
+  const item={
+    id:Date.now(),
+    milestone:photoMilestone.value || "Check-in",
+    date:photoDate.value || ymd(new Date()),
+    height:totalHeight,
+    weight:photoWeight.value,
+    waist:photoWaist.value,
+    neck:physNeck.value,
+    chest:physChest.value,
+    shoulders:physShoulders.value,
+    leftArm:physLeftArm.value,
+    rightArm:physRightArm.value,
+    forearm:physForearm.value,
+    hips:physHips.value,
+    leftThigh:physLeftThigh.value,
+    rightThigh:physRightThigh.value,
+    leftCalf:physLeftCalf.value,
+    rightCalf:physRightCalf.value,
+    bodyFat: bf ? bf.toFixed(1) : "",
+    prs:{squat:prSquat.value, bench:prBench.value, deadlift:prDeadlift.value, ohp:prOHP.value, row:prRow.value, pullups:prPullups.value},
+    recovery:{sleep:physSleep.value, stress:physStress.value, energy:physEnergy.value, water:physWater.value},
+    notes:photoNotes.value,
+    photos:{front, side, back}
+  };
+  const arr=photos();
+  arr.push(item);
+  try{
+    localStorage.setItem("photoMilestones", JSON.stringify(arr));
+    alert("Physique check-in saved.");
+    ["frontPhotoInput","sidePhotoInput","backPhotoInput"].forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
+    photoNotes.value="";
+    renderPhotos();
+  }catch(err){
+    alert("Storage is still full. Use Save Photos to Phone, then delete older check-ins from the app.");
+  }
+}
+function renderPhotos(){
+  const list = document.getElementById("photoList");
+  if(!list) return;
+  const arr = photos().sort((a,b)=>a.date.localeCompare(b.date));
+  updatePhysiqueSummary();
+  if(!arr.length){
+    list.innerHTML = '<p class="small">No physique check-ins saved yet.</p>';
+    return;
+  }
+  list.innerHTML = "";
+  arr.forEach(p=>{
+    const div=document.createElement("div");
+    div.className="checkinCard";
+    const lean = p.bodyFat && p.weight ? (parseFloat(p.weight)*(1-parseFloat(p.bodyFat)/100)).toFixed(1) : "";
+    const photosHtml = `<div class="photoTriple">
+      ${p.photos?.front ? `<div><b>Front</b><img src="${p.photos.front}"></div>` : ""}
+      ${p.photos?.side ? `<div><b>Side</b><img src="${p.photos.side}"></div>` : ""}
+      ${p.photos?.back ? `<div><b>Back</b><img src="${p.photos.back}"></div>` : ""}
+    </div>`;
+    div.innerHTML = `
+      <h3>${p.milestone}</h3>
+      <p class="small"><b>Date:</b> ${p.date || "-"} | <b>Weight:</b> ${p.weight || "-"} | <b>Waist:</b> ${p.waist || "-"} | <b>BF est:</b> ${p.bodyFat || "-"}% | <b>Lean mass:</b> ${lean || "-"}</p>
+      <details open><summary>Measurements</summary>
+        <p class="small">
+        Neck: ${p.neck||"-"} | Chest: ${p.chest||"-"} | Shoulders: ${p.shoulders||"-"} | Arms: ${p.leftArm||"-"} / ${p.rightArm||"-"}<br>
+        Forearm: ${p.forearm||"-"} | Hips: ${p.hips||"-"} | Thighs: ${p.leftThigh||"-"} / ${p.rightThigh||"-"} | Calves: ${p.leftCalf||"-"} / ${p.rightCalf||"-"}
+        </p>
+      </details>
+      <details><summary>Strength PRs</summary>
+        <p class="small">Squat: ${p.prs?.squat||"-"} | Bench: ${p.prs?.bench||"-"} | Deadlift: ${p.prs?.deadlift||"-"} | OHP: ${p.prs?.ohp||"-"} | Row: ${p.prs?.row||"-"} | Pull-ups: ${p.prs?.pullups||"-"}</p>
+      </details>
+      <details><summary>Recovery</summary>
+        <p class="small">Sleep: ${p.recovery?.sleep||"-"} | Stress: ${p.recovery?.stress||"-"} | Energy: ${p.recovery?.energy||"-"} | Water: ${p.recovery?.water||"-"}</p>
+      </details>
+      <p class="small">${p.notes || ""}</p>
+      ${photosHtml}
+      <button class="danger" onclick="deletePhoto(${p.id})">Delete Check-in</button>
+    `;
+    list.appendChild(div);
+  });
+}
+function deletePhoto(id){
+  if(!confirm("Delete this physique check-in?")) return;
+  localStorage.setItem("photoMilestones", JSON.stringify(photos().filter(p=>p.id !== id)));
+  renderPhotos();
+}
+function exportPhotoData(){
+  const blob=new Blob([localStorage.getItem("photoMilestones") || "[]"],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="physique-dashboard-backup.json"; a.click();
+}
+function clearPhotos(){
+  if(confirm("Clear all physique check-ins?")){
+    localStorage.removeItem("photoMilestones");
+    renderPhotos();
+  }
+}
+
+async function enableNotifications(){
+  if(!("Notification" in window)){ alert("This browser does not support notifications."); return; }
+  const permission = await Notification.requestPermission();
+  if(permission === "granted"){
+    new Notification("Workout Tracker reminders enabled", {body:"In-app reminders will appear while the tracker is open."});
+  } else { alert("Notifications were not enabled. Use Apple Calendar reminders instead."); }
+}
+function icsDate(d){ return d.toISOString().replace(/[-:]/g,"").split(".")[0] + "Z"; }
+function downloadCalendarReminders(){
+  const time = document.getElementById("reminderTime")?.value || "07:00";
+  const daysAhead = parseInt(document.getElementById("reminderDays")?.value || "0", 10);
+  const [hh, mm] = time.split(":").map(Number);
+  let events = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//10 Year Workout Tracker//EN"];
+  for(let i=0;i<84;i++){
+    const workoutDate = new Date(parseLocal(planStart).getTime() + i*86400000);
+    const workoutStr = ymd(workoutDate);
+    const p = workoutForDate(workoutStr);
+    let title = p.type === "Lift" ? p.code + " workout" : p.type === "Cardio" ? "Cardio day" : "Rest day";
+    let desc = p.type === "Lift" ? describeDay(workoutStr) + " Demo videos are in your tracker." :
+               p.type === "Cardio" ? "20–35 minutes easy cardio." : "Recovery day.";
+    const reminderDate = new Date(workoutDate.getTime() - daysAhead*86400000);
+    reminderDate.setHours(hh, mm, 0, 0);
+    const endDate = new Date(reminderDate.getTime() + 30*60000);
+    events.push("BEGIN:VEVENT","UID:"+workoutStr+"-workout-tracker","DTSTAMP:"+icsDate(new Date()),"DTSTART:"+icsDate(reminderDate),"DTEND:"+icsDate(endDate),"SUMMARY:"+title,"DESCRIPTION:"+desc.replace(/,/g,"\\,"),
+    "BEGIN:VALARM","TRIGGER:-PT10M","ACTION:DISPLAY","DESCRIPTION:"+title,"END:VALARM","END:VEVENT");
+  }
+  events.push("END:VCALENDAR");
+  const blob = new Blob([events.join("\r\n")], {type:"text/calendar"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "workout-reminders-12-weeks.ics"; a.click();
+}
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{})); }
+
+
+
+
+const recipeBook = {"Eggs + turkey scramble, oats, berries": {"title": "Turkey Egg Scramble + Oats", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23f97316%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2322c55e%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETurkey%20Egg%20Scramble%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 620, "p": "48g", "c": "58g", "f": "20g", "tags": ["breakfast", "high protein"], "ingredients": ["3 eggs or 2 eggs + egg whites", "4 oz lean turkey", "1/2 cup oats", "1/2 cup berries", "spinach/peppers", "salt, pepper, garlic"], "steps": ["Cook turkey with peppers/spinach.", "Add eggs and scramble until done.", "Cook oats separately and top with berries.", "Pack oats separate if traveling."]}, "Chicken rice broccoli bowls": {"title": "Chicken Rice Broccoli Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23f59e0b%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2316a34a%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EChicken%20Rice%20Bowl%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 540, "p": "52g", "c": "50g", "f": "12g", "tags": ["trip friendly", "microwave"], "ingredients": ["8 oz chicken breast", "1 cup cooked rice", "1 cup broccoli", "1 tsp olive oil", "garlic, paprika, salt, pepper"], "steps": ["Season and bake chicken at 400\u00b0F for 20\u201325 min.", "Cook rice and steam broccoli.", "Portion into containers.", "Reheat 90\u2013120 sec."]}, "Lean beef sweet potato bowls": {"title": "Lean Beef Sweet Potato Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23b45309%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23f97316%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EBeef%20Sweet%20Potato%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 610, "p": "48g", "c": "55g", "f": "20g", "tags": ["trip friendly", "hearty"], "ingredients": ["7 oz lean beef", "1 medium sweet potato", "green beans or spinach", "taco seasoning", "salsa"], "steps": ["Brown lean beef with seasoning.", "Bake or microwave sweet potato.", "Add vegetables and salsa.", "Portion into travel containers."]}, "Greek yogurt + berries + protein granola": {"title": "Greek Yogurt Protein Parfait", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%237c3aed%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23ec4899%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EGreek%20Yogurt%20Parfait%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 380, "p": "35g", "c": "42g", "f": "8g", "tags": ["snack", "cold meal"], "ingredients": ["1.5 cups Greek yogurt", "1 scoop protein optional", "berries", "protein granola", "cinnamon"], "steps": ["Mix yogurt with protein if using.", "Top with berries and granola.", "Keep cold with ice pack.", "Eat as snack or breakfast."]}, "Protein shake + almonds": {"title": "Protein Shake + Almonds", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%232563eb%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2306b6d4%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EShake%20%2B%20Almonds%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 330, "p": "35g", "c": "10g", "f": "16g", "tags": ["quick", "portable"], "ingredients": ["1 scoop whey protein", "water", "1 oz almonds", "creatine optional"], "steps": ["Add protein to shaker.", "Mix with water.", "Eat almonds on side.", "Use post-workout or between flights."]}, "Salmon or chicken + rice + asparagus": {"title": "Salmon Rice Asparagus", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fb7185%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2310b981%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ESalmon%20Rice%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 620, "p": "50g", "c": "50g", "f": "22g", "tags": ["dinner", "high protein"], "ingredients": ["7 oz salmon or chicken", "1 cup cooked rice", "asparagus", "lemon pepper", "olive oil spray"], "steps": ["Bake salmon at 400\u00b0F for 12\u201315 min or chicken for 20\u201325 min.", "Cook rice.", "Roast asparagus.", "Pack or eat fresh."]}, "Protein overnight oats with Greek yogurt": {"title": "Protein Overnight Oats", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%238b5cf6%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23f59e0b%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EOvernight%20Oats%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 520, "p": "45g", "c": "65g", "f": "10g", "tags": ["breakfast", "no cook"], "ingredients": ["1/2 cup oats", "1 cup Greek yogurt", "1 scoop protein", "berries", "cinnamon", "splash almond milk"], "steps": ["Mix oats, yogurt, protein, and milk.", "Refrigerate overnight.", "Top with berries.", "Pack cold for trip."]}, "Buffalo chicken wraps with light ranch, no blue cheese": {"title": "Buffalo Chicken Wrap", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ef4444%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23f97316%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EBuffalo%20Wrap%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 520, "p": "50g", "c": "45g", "f": "14g", "tags": ["trip friendly", "no blue cheese"], "ingredients": ["8 oz shredded chicken", "whole wheat wrap", "buffalo sauce", "light ranch", "lettuce", "tomato"], "steps": ["Mix chicken with buffalo sauce.", "Add lettuce and tomato to wrap.", "Use light ranch, no blue cheese.", "Wrap tight in foil."]}, "Tuna pasta protein bowls": {"title": "Tuna Protein Pasta Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%230ea5e9%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2384cc16%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETuna%20Pasta%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 560, "p": "45g", "c": "65g", "f": "12g", "tags": ["pantry", "travel"], "ingredients": ["2 tuna packets", "1.5 cups cooked pasta", "Greek yogurt or light mayo", "celery/peppers", "seasoning"], "steps": ["Cook pasta and cool.", "Mix tuna with yogurt/light mayo.", "Combine with vegetables.", "Keep chilled."]}, "Hard-boiled eggs + fruit + jerky": {"title": "Egg Jerky Snack Box", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23facc15%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2322c55e%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ESnack%20Box%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 420, "p": "35g", "c": "30g", "f": "18g", "tags": ["snack box", "airport"], "ingredients": ["3 hard-boiled eggs", "1 apple or banana", "1 serving jerky", "baby carrots optional"], "steps": ["Boil eggs 10\u201312 minutes.", "Cool and peel.", "Pack with fruit and jerky.", "Use as emergency protein meal."]}, "Protein shake + banana": {"title": "Protein Shake + Banana", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23facc15%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%233b82f6%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EShake%20Banana%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 310, "p": "30g", "c": "35g", "f": "3g", "tags": ["post workout", "fast"], "ingredients": ["1 scoop protein", "water", "1 banana", "5g creatine optional"], "steps": ["Mix shake with water.", "Eat banana on side.", "Use post-workout or early flight day."]}, "Ground turkey taco bowls": {"title": "Turkey Taco Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fb923c%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2322c55e%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETurkey%20Taco%20Bowl%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 580, "p": "52g", "c": "55g", "f": "16g", "tags": ["meal prep", "microwave"], "ingredients": ["8 oz ground turkey", "1 cup rice", "peppers/onions", "salsa", "taco seasoning"], "steps": ["Brown turkey with seasoning.", "Cook rice.", "Saut\u00e9 peppers/onions.", "Top with salsa."]}, "Breakfast burritos with eggs, turkey, peppers": {"title": "Turkey Egg Breakfast Burrito", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23f97316%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23eab308%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EBreakfast%20Burrito%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 520, "p": "42g", "c": "45g", "f": "18g", "tags": ["breakfast", "freezer friendly"], "ingredients": ["eggs/egg whites", "lean turkey", "wrap", "peppers", "spinach", "salsa"], "steps": ["Scramble eggs and turkey.", "Add peppers/spinach.", "Wrap with salsa.", "Freeze or refrigerate."]}, "Chicken pesto pasta prep": {"title": "Chicken Pesto Pasta", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2322c55e%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2384cc16%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EChicken%20Pesto%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 650, "p": "55g", "c": "70g", "f": "18g", "tags": ["meal prep", "higher carb"], "ingredients": ["8 oz chicken", "1.5 cups cooked pasta", "1 tbsp pesto", "spinach", "parmesan optional"], "steps": ["Cook chicken and pasta.", "Mix pasta with pesto and spinach.", "Add chicken.", "Portion into containers."]}, "Steak + potatoes + green beans": {"title": "Steak Potatoes Green Beans", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2392400e%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2365a30d%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ESteak%20Potatoes%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 670, "p": "55g", "c": "55g", "f": "24g", "tags": ["dinner", "strength day"], "ingredients": ["7 oz steak", "potatoes", "green beans", "steak seasoning", "olive oil spray"], "steps": ["Cook steak to preference.", "Roast or microwave potatoes.", "Steam green beans.", "Pack or eat fresh."]}, "Greek yogurt parfait": {"title": "Greek Yogurt Parfait", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23a855f7%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23ec4899%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EYogurt%20Parfait%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 380, "p": "35g", "c": "42g", "f": "8g", "tags": ["snack", "cold"], "ingredients": ["Greek yogurt", "berries", "protein granola", "honey optional"], "steps": ["Layer yogurt and berries.", "Add granola before eating.", "Keep cold."]}, "Tuna packets + crackers + fruit": {"title": "Tuna Travel Pack", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%230284c7%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23f59e0b%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETuna%20Travel%20Pack%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 430, "p": "35g", "c": "45g", "f": "9g", "tags": ["TSA friendly", "backup"], "ingredients": ["2 tuna packets", "whole grain crackers", "apple or banana", "mustard packet"], "steps": ["Pack tuna packets and crackers.", "Add fruit.", "Use mustard for flavor.", "No refrigeration needed before opening."]}, "Turkey burger bowls with rice": {"title": "Turkey Burger Rice Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23f97316%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2316a34a%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETurkey%20Burger%20Bowl%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 600, "p": "52g", "c": "55g", "f": "18g", "tags": ["meal prep", "microwave"], "ingredients": ["8 oz turkey patties", "1 cup rice", "lettuce/tomato", "pickles", "light sauce"], "steps": ["Cook turkey patties.", "Slice over rice.", "Add vegetables after reheating.", "Use light sauce."]}, "Eggs + oats + banana": {"title": "Eggs Oats Banana", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23facc15%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%23f97316%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EEggs%20Oats%20Banana%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 600, "p": "38g", "c": "70g", "f": "18g", "tags": ["breakfast", "simple"], "ingredients": ["3 eggs", "1/2 cup oats", "1 banana", "cinnamon"], "steps": ["Cook eggs.", "Cook oats.", "Top oats with banana and cinnamon."]}, "Teriyaki chicken rice bowls": {"title": "Teriyaki Chicken Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2392400e%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2316a34a%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETeriyaki%20Chicken%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 610, "p": "55g", "c": "65g", "f": "12g", "tags": ["meal prep", "microwave"], "ingredients": ["8 oz chicken", "1 cup rice", "broccoli", "light teriyaki sauce"], "steps": ["Cook chicken.", "Cook rice and broccoli.", "Add light teriyaki.", "Portion into containers."]}, "Turkey meatballs + pasta + spinach": {"title": "Turkey Meatball Pasta", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23dc2626%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2316a34a%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ETurkey%20Meatballs%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 650, "p": "55g", "c": "70g", "f": "16g", "tags": ["meal prep", "freezer friendly"], "ingredients": ["lean turkey meatballs", "pasta", "marinara", "spinach"], "steps": ["Bake turkey meatballs.", "Cook pasta.", "Mix with marinara and spinach.", "Portion."]}, "Protein shake + peanut butter packet": {"title": "Shake + Peanut Butter", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%237c2d12%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%233b82f6%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EShake%20PB%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 390, "p": "35g", "c": "15g", "f": "18g", "tags": ["portable", "quick"], "ingredients": ["1 scoop protein", "water", "1 peanut butter packet", "creatine optional"], "steps": ["Mix protein with water.", "Eat peanut butter packet separately.", "Good between flights."]}, "Almonds + jerky + apple": {"title": "Almond Jerky Apple Pack", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2384cc16%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2392400e%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EJerky%20Apple%20Pack%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 430, "p": "30g", "c": "35g", "f": "20g", "tags": ["airport", "no fridge"], "ingredients": ["jerky", "1 oz almonds", "1 apple", "water/electrolytes"], "steps": ["Pack all items together.", "Use as emergency meal.", "Drink water/electrolytes."]}, "Lean beef rice bowls": {"title": "Lean Beef Rice Bowl", "img": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22900%22%20height%3D%22450%22%20viewBox%3D%220%200%20900%20450%22%3E%0A%3Cdefs%3E%0A%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2392400e%22%20offset%3D%220%22/%3E%3Cstop%20stop-color%3D%22%2322c55e%22%20offset%3D%221%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%22900%22%20height%3D%22450%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%22130%22%20fill%3D%22rgba%28255%2C255%2C255%2C.75%29%22/%3E%0A%3Ccircle%20cx%3D%22250%22%20cy%3D%22230%22%20r%3D%2295%22%20fill%3D%22rgba%28255%2C255%2C255%2C.55%29%22/%3E%0A%3Cellipse%20cx%3D%22260%22%20cy%3D%22225%22%20rx%3D%2265%22%20ry%3D%2235%22%20fill%3D%22%23fef3c7%22/%3E%0A%3Cellipse%20cx%3D%22205%22%20cy%3D%22250%22%20rx%3D%2245%22%20ry%3D%2225%22%20fill%3D%22%23dcfce7%22/%3E%0A%3Cellipse%20cx%3D%22305%22%20cy%3D%22255%22%20rx%3D%2250%22%20ry%3D%2228%22%20fill%3D%22%23fee2e2%22/%3E%0A%3Crect%20x%3D%22445%22%20y%3D%22120%22%20width%3D%22380%22%20height%3D%22210%22%20rx%3D%2226%22%20fill%3D%22rgba%2815%2C23%2C42%2C.75%29%22/%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22205%22%20font-family%3D%22Arial%22%20font-size%3D%2238%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EBeef%20Rice%20Bowl%3C/text%3E%0A%3Ctext%20x%3D%22635%22%20y%3D%22252%22%20font-family%3D%22Arial%22%20font-size%3D%2222%22%20text-anchor%3D%22middle%22%20fill%3D%22%23cbd5e1%22%3Emeal%20prep%20recipe%3C/text%3E%0A%3C/svg%3E", "cal": 610, "p": "50g", "c": "58g", "f": "18g", "tags": ["meal prep", "microwave"], "ingredients": ["8 oz lean beef", "1 cup rice", "mixed vegetables", "salsa or seasoning"], "steps": ["Brown beef.", "Cook rice and vegetables.", "Combine and portion."]}};
+
+function renderRecipeCard(category, mealName){
+  const r = recipeBook[mealName];
+  if(!r){
+    return `<div class="mealCard"><b>${category}</b>${mealName}</div>`;
+  }
+  const ingredients = r.ingredients.map(i=>`<label><input type="checkbox"> ${i}</label>`).join("");
+  const steps = r.steps.map((s,i)=>`<li>${s}</li>`).join("");
+  const tags = r.tags.map(t=>`<span>${t}</span>`).join("");
+  return `
+  <div class="recipeCard">
+    <img class="recipeImg" src="${r.img}" alt="${r.title}">
+    <div class="recipeBody">
+      <h3>${r.title}</h3>
+      <div class="small"><b>${category}</b></div>
+      <div class="recipeTags">${tags}</div>
+      <div class="recipeMeta">
+        <div><b>${r.cal}</b>cal</div>
+        <div><b>${r.p}</b>protein</div>
+        <div><b>${r.c}</b>carbs</div>
+        <div><b>${r.f}</b>fat</div>
+      </div>
+      <details>
+        <summary>Ingredients</summary>
+        <div class="simpleList">${ingredients}</div>
+      </details>
+      <details>
+        <summary>Instructions</summary>
+        <ol>${steps}</ol>
+      </details>
+    </div>
+  </div>`;
+}
+
+
+let nutritionViewDate=new Date(2026,4,18), selectedFoodDate=ymd(new Date());
+const cbRecipes={"Protein Overnight Oats": ["6", "520 cal \u2022 45g protein", "4 days cold", [["Old-fashioned oats", "3 cups"], ["Greek yogurt", "6 cups"], ["Protein powder", "6 scoops"], ["Berries", "3 cups"], ["Almond milk/water", "2\u20133 cups"], ["Cinnamon", "2 tsp"]], ["Set out 6 jars.", "Add 1/2 cup oats, 1 cup Greek yogurt, 1 scoop protein, berries, cinnamon, and liquid to each jar.", "Stir until smooth and refrigerate overnight.", "Keep cold during trips."]], "Chicken Rice Broccoli Bowls": ["6", "540 cal \u2022 52g protein", "4 days refrigerated", [["Chicken breast", "3 lb raw"], ["Jasmine rice", "3 cups dry"], ["Broccoli", "6 cups"], ["Olive oil", "2 tbsp"], ["Garlic powder", "2 tsp"], ["Smoked paprika", "2 tsp"], ["Salt + pepper", "to taste"]], ["Preheat oven to 400\u00b0F.", "Season chicken with oil and spices.", "Bake 22\u201326 minutes, then rest 5 minutes.", "Cook rice and steam broccoli.", "Portion each container with about 8 oz cooked chicken, 1.5 cups rice, and 1 cup broccoli."]], "Lean Beef Sweet Potato Bowls": ["6", "610 cal \u2022 48g protein", "4 days refrigerated", [["96% lean beef", "3 lb"], ["Sweet potatoes", "6 medium"], ["Green beans", "6 cups"], ["Olive oil", "2 tbsp"], ["Steak/taco seasoning", "3 tbsp"], ["Salsa", "1 jar optional"]], ["Bake or microwave sweet potatoes until soft.", "Brown beef and season well.", "Steam green beans.", "Portion beef, 1 sweet potato, and green beans per container."]], "Egg Jerky Snack Boxes": ["6", "420 cal \u2022 35g protein", "4 days refrigerated", [["Eggs", "18"], ["Low-sugar jerky", "6 servings"], ["Apples or bananas", "6"], ["Baby carrots", "1 bag"], ["Almonds", "6 oz"]], ["Boil eggs 10\u201312 minutes and cool in ice bath.", "Peel eggs.", "Pack 3 eggs, jerky, fruit, carrots, and 1 oz almonds per box."]], "Protein Shake Setup": ["6", "250 cal \u2022 30g protein", "dry pack", [["Protein powder", "6 scoops"], ["Creatine", "6 servings, 5g each"], ["Electrolytes", "6 packets"], ["Shaker bottle", "1"]], ["Pre-portion protein powder into 6 bags.", "Pack creatine and electrolytes.", "Mix with cold water when ready."]], "Buffalo Chicken Wraps": ["6", "520 cal \u2022 50g protein", "3 days refrigerated", [["Chicken breast", "3 lb raw"], ["Whole wheat wraps", "6 large"], ["Buffalo sauce", "3/4 cup"], ["Light ranch", "6 tbsp"], ["Romaine lettuce", "1 bag"], ["Tomatoes", "3"]], ["Cook and shred chicken.", "Mix chicken with buffalo sauce.", "Add lettuce, tomato, chicken, and 1 tbsp light ranch per wrap. No blue cheese.", "Roll tightly and keep cold."]], "Ground Turkey Taco Bowls": ["6", "580 cal \u2022 52g protein", "4 days refrigerated", [["93% lean ground turkey", "3 lb"], ["Rice", "3 cups dry"], ["Bell peppers", "3 large"], ["Yellow onion", "1 large"], ["Taco seasoning", "3 tbsp"], ["Salsa", "1 jar"]], ["Cook rice.", "Brown turkey.", "Add peppers, onion, taco seasoning, and a splash of water.", "Portion with rice and salsa."]], "Tuna Protein Pasta Bowls": ["6", "560 cal \u2022 45g protein", "3 days refrigerated", [["Tuna packets", "12"], ["Pasta", "1.5 lb dry"], ["Greek yogurt or light mayo", "1.5 cups"], ["Celery or peppers", "2 cups diced"], ["Lemon pepper", "2 tsp"]], ["Cook pasta and rinse cool.", "Mix tuna with yogurt/light mayo and lemon pepper.", "Fold in pasta and vegetables.", "Portion into 6 containers."]]}; const cbPlans=[["Week A \u2014 Chicken + Beef Base", ["Protein Overnight Oats", "Chicken Rice Broccoli Bowls", "Lean Beef Sweet Potato Bowls", "Egg Jerky Snack Boxes", "Protein Shake Setup"]], ["Week B \u2014 Wrap + Taco Week", ["Protein Overnight Oats", "Buffalo Chicken Wraps", "Ground Turkey Taco Bowls", "Tuna Protein Pasta Bowls", "Protein Shake Setup"]], ["Week C \u2014 Higher-Carb Training Week", ["Protein Overnight Oats", "Tuna Protein Pasta Bowls", "Chicken Rice Broccoli Bowls", "Ground Turkey Taco Bowls", "Egg Jerky Snack Boxes"]], ["Week D \u2014 Simple Travel Week", ["Protein Overnight Oats", "Chicken Rice Broccoli Bowls", "Lean Beef Sweet Potato Bowls", "Egg Jerky Snack Boxes", "Protein Shake Setup"]]];
+function foodTab(n){document.querySelectorAll('.foodPane').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.foodNav button').forEach(x=>x.classList.remove('on'));document.getElementById('food'+n[0].toUpperCase()+n.slice(1)).classList.add('on');document.getElementById('fbtn'+n[0].toUpperCase()+n.slice(1)).classList.add('on')}
+function addFoodDays(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function foodPlan(ds){let d=parseLocal(ds), n=Math.max(1,Math.floor((d-new Date(2026,4,18))/(86400000*7))+1);return cbPlans[(n-1)%cbPlans.length]}
+function foodMonth(n){nutritionViewDate.setMonth(nutritionViewDate.getMonth()+n);renderNutritionCalendar()}
+function renderNutritionCalendar(){let lab=document.getElementById('nutritionMonthLabel'); if(!lab)return; lab.textContent=nutritionViewDate.toLocaleDateString(undefined,{month:'long',year:'numeric'});let grid=document.getElementById('nutritionCalendarGrid');grid.innerHTML='';let y=nutritionViewDate.getFullYear(),m=nutritionViewDate.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0);for(let i=0;i<first.getDay();i++){let b=document.createElement('div');b.className='day mutedDay';grid.appendChild(b)}for(let d=1;d<=last.getDate();d++){let ds=ymd(new Date(y,m,d));let el=document.createElement('div');el.className='day nutritionDay';el.innerHTML=`<div class="num">${d}</div><div class="badge deload">Food</div><div class="mini">Plan</div>`;el.onclick=()=>selectFoodDate(ds);grid.appendChild(el)}}
+function selectFoodDate(ds){selectedFoodDate=ds||ymd(new Date()); if(document.getElementById('foodCycleDate'))foodCycleDate.value=selectedFoodDate; renderFoodWeek(selectedFoodDate); foodTab('week')}
+function renderFoodWeek(ds){selectedFoodDate=ds||selectedFoodDate||ymd(new Date());let start=parseLocal(selectedFoodDate),end=addFoodDays(start,6),p=foodPlan(selectedFoodDate),goal=(document.getElementById('foodGoal')?foodGoal.value:'recomp');if(document.getElementById('foodExplain'))foodExplain.innerHTML=`Shopping list starts on <b>${start.toLocaleDateString()}</b> and covers 7 days through <b>${end.toLocaleDateString()}</b>.`;if(document.getElementById('foodWeekTitle'))foodWeekTitle.textContent=p[0];if(document.getElementById('foodWeekHero'))foodWeekHero.innerHTML=`<b>Meal-prep cycle:</b> ${start.toLocaleDateString()} – ${end.toLocaleDateString()}<br><b>Goal:</b> ${goal}<br>No cottage cheese. No blue cheese.`;if(document.getElementById('foodRecipes'))foodRecipes.innerHTML=p[1].map(renderFoodRecipe).join('');renderFoodShop(selectedFoodDate);renderNutritionCalendar()}
+function renderFoodRecipe(name){let r=cbRecipes[name],ing=r[3].map(i=>`<label><input type="checkbox"> ${i[0]} — ${i[1]}</label>`).join(''),steps=r[4].map(s=>`<li>${s}</li>`).join('');return `<div class="cookCard"><h3>${name}</h3><div class="cookBody"><div class="cookMeta"><div><b>${r[0]}</b>servings</div><div><b>${r[1]}</b>macros</div><div><b>${r[2]}</b>storage</div><div><b>Travel</b>ready</div></div><details open><summary>Ingredients with exact portions</summary><div class="checkList">${ing}</div></details><details open><summary>Professional prep instructions</summary><ol class="stepList">${steps}</ol></details></div></div>`}
+function foodCat(n){n=n.toLowerCase();if(/chicken|turkey|beef|tuna|egg|yogurt|protein/.test(n))return'Protein';if(/rice|oats|pasta|wrap|potato/.test(n))return'Carbs';if(/broccoli|pepper|onion|beans|berries|apple|banana|lettuce|tomato|spinach|carrot/.test(n))return'Produce';if(/oil|almond|ranch/.test(n))return'Fats';if(/creatine|electrolyte/.test(n))return'Supplements';if(/jerky|shaker/.test(n))return'Travel';return'Seasoning'}
+function renderFoodShop(ds){let start=parseLocal(ds),end=addFoodDays(start,6),p=foodPlan(ds),groups={Protein:[],Carbs:[],Produce:[],Fats:[],Seasoning:[],Supplements:[],Travel:[]};p[1].forEach(m=>cbRecipes[m][3].forEach(i=>groups[foodCat(i[0])].push(i)));if(document.getElementById('shoppingWeekHeader'))shoppingWeekHeader.innerHTML=`<b>${p[0]}</b><br>Grocery list for: <b>${start.toLocaleDateString()} – ${end.toLocaleDateString()}</b><br>This list is generated only from this selected 7-day meal-prep cycle.`;if(document.getElementById('shoppingListOutput'))shoppingListOutput.innerHTML=Object.entries(groups).map(([g,it])=>it.length?`<div class="groceryGroup"><h3>${g}</h3><div class="checkList">${it.map(i=>`<label><input type="checkbox"> ${i[0]} — ${i[1]}</label>`).join('')}</div></div>`:'').join('')}
+function calculateNutritionProjection(){let out=document.getElementById('nutritionProjection');if(out)out.textContent='Use Food tab targets: protein 200–220g/day. Adjust calories based on weekly weight and waist changes.'}
+
+
+function openDemoVideo(exerciseName){
+  const query = encodeURIComponent((exerciseName || "exercise") + " proper form exercise demo");
+  const url = "https://www.youtube.com/results?search_query=" + query;
+  window.location.href = url;
+}
+
+
+document.addEventListener("click", function(e){
+  const btn = e.target.closest && e.target.closest(".videoBtn");
+  if(!btn) return;
+  e.preventDefault();
+  const row = btn.closest(".exercise");
+  const input = row ? row.querySelector(".exName") : null;
+  openDemoVideo(input ? input.value : "exercise");
+});
+
+
+function demoVideoUrl(exerciseName){
+  return "https://www.youtube.com/results?search_query=" + encodeURIComponent((exerciseName || "exercise") + " proper form exercise demo");
+}
+function openDemoVideo(exerciseName){
+  window.location.assign(demoVideoUrl(exerciseName));
+}
+function refreshVideoLinks(){
+  document.querySelectorAll(".exercise").forEach(row=>{
+    const input = row.querySelector(".exName");
+    const link = row.querySelector(".videoLink");
+    if(input && link){ link.href = demoVideoUrl(input.value); }
+  });
+}
+document.addEventListener("input", function(e){
+  if(e.target && e.target.classList && e.target.classList.contains("exName")) refreshVideoLinks();
+});
+
+logDate.value=ymd(new Date());photoDate.value=ymd(new Date());loadDate(ymd(new Date()));renderCalendar();renderPhotos();
+</script>
+</body>
+</html>
